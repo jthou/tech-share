@@ -141,13 +141,13 @@ appendfilename "appendonly.aof"
 
 ## redis的数据类型和常用命令
 
-### key
+### key （键）
 
-### string
+### string （字符串）
 
-### Hashe
+### Hashe （哈希）
 
-### List
+### List （列表）
 
 redis的list实际上是一个双向链表
 
@@ -343,9 +343,65 @@ redis> LRANGE greet 0 -1
 
 
 
-### Set
+### Set（集合）
 
+set中的值不能重复。
+
+#### SADD
+**SADD key member [member ...]**
+- 将一个或多个 `member` 元素加入到集合 `key` 当中，已经存在于集合的 `member` 元素将被忽略。
+- 假如 `key` 不存在，则创建一个只包含 `member` 元素作成员的集合。
+- 当 `key` 不是集合类型时，返回一个错误。
+**时间复杂度:** O(N)， `N` 是被添加的元素的数量。
+**返回值:** 被添加到集合中的新元素的数量，不包括被忽略的元素。
+
+```bash
+# 添加单个元素
+redis> SADD bbs "discuz.net"
+(integer) 1
+# 添加重复元素
+redis> SADD bbs "discuz.net"
+(integer) 0
+# 添加多个元素
+redis> SADD bbs "tianya.cn" "groups.google.com"
+(integer) 2
+redis> SMEMBERS bbs
+1) "discuz.net"
+2) "groups.google.com"
+3) "tianya.cn"
+```
+
+#### SCARD
+
+返回集合 `key` 的基数(集合中元素的数量)。
+**时间复杂度:**O(1)
+**返回值：**集合的基数。当 `key` 不存在时，返回 `0` 。
+
+```bash
+redis> SADD tool pc printer phone
+(integer) 3
+redis> SCARD tool   # 非空集合
+(integer) 3
+redis> DEL tool
+(integer) 1
+redis> SCARD tool   # 空集合
+(integer) 0
+```
 ### Sorted Set
+
+### Hash
+
+map集合，
+
+```
+set myhash field
+```
+
+
+
+ 
+
+
 
 ### HyperLogLog
 
@@ -373,6 +429,8 @@ redis> LRANGE greet 0 -1
 
 
 ### 参考
-- [1][https://haicoder.net/redis/redis-birth.html](https://https://haicoder.net/redis/redis-birth.html)
-- [2][https://zhuanlan.zhihu.com/p/100200635](https://zhuanlan.zhihu.com/p/100200635)
-- [3][https://www.bilibili.com/video/BV1S54y1R7SB?from=search&seid=13225722623255177774](https://www.bilibili.com/video/BV1S54y1R7SB?from=search&seid=13225722623255177774)
+- [1] [https://haicoder.net/redis/redis-birth.html](https://https://haicoder.net/redis/redis-birth.html)
+- [2] [https://zhuanlan.zhihu.com/p/100200635](https://zhuanlan.zhihu.com/p/100200635)
+- [3] [https://www.bilibili.com/video/BV1S54y1R7SB?from=search&seid=13225722623255177774](https://www.bilibili.com/video/BV1S54y1R7SB?from=search&seid=13225722623255177774)
+- [4] [http://doc.redisfans.com/index.html](http://doc.redisfans.com/index.html)
+
