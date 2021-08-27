@@ -105,12 +105,14 @@ Require 192.168.16.0/24
 
 ```bash
 # 第一次运行，创建文件
-/usr/local/apache2/bin/htpasswd  -c  /share/soft/apache.passwd  user1  
+htpasswd  -c  /share/soft/apache.passwd  user1  
 # 再运行，添加用户
-/usr/local/apache2/bin/htpasswd  -m  /share/soft/apache.passwd  user2
+htpasswd  -m  /share/soft/apache.passwd  user2
 ```
 
 
 
+## 参考文献
 
+[1]. [https://www.cnblogs.com/leezhxing/p/3298060.html](https://www.cnblogs.com/leezhxing/p/3298060.html)
 
