@@ -421,6 +421,22 @@ set myhash field
 
 ### python
 
+## Redis和MySQL
+
+### 缓存与数据一致性
+
+业界基本一致的意见是，没有完美的数据一致性方案，只能在性能和数据准确性之间做妥协。
+
+- 读redis，写MySQL，缓存只做失效，不做更新
+
+- 写MysQL后通知redis对应的缓存失效，去数据库缓存新数据
+
+
+
+### 本节参考资料
+
+[1]. [https://www.cnblogs.com/upnote/p/13185047.html](https://www.cnblogs.com/upnote/p/13185047.html)
+
 ## 应用案例
 
 ### web 服务与 AI 算法系统架构 
@@ -433,4 +449,5 @@ set myhash field
 - [2] [https://zhuanlan.zhihu.com/p/100200635](https://zhuanlan.zhihu.com/p/100200635)
 - [3] [https://www.bilibili.com/video/BV1S54y1R7SB?from=search&seid=13225722623255177774](https://www.bilibili.com/video/BV1S54y1R7SB?from=search&seid=13225722623255177774)
 - [4] [http://doc.redisfans.com/index.html](http://doc.redisfans.com/index.html)
+- [5] [https://www.zhihu.com/question/36413559](https://www.zhihu.com/question/36413559)
 

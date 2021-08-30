@@ -4,7 +4,13 @@
 
 为主目录或虚拟目录设置权限，这些语句仅对被设置目录及其子目录起作用，比如：
 
-![image-20210827102631004](img/05-Apache%E7%AE%80%E6%98%8E%E6%95%99%E7%A8%8B/image-20210827102631004.png)
+```xml
+<Directory "/var/www/">
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+</Directory>
+```
 
 #### Options
 
@@ -46,11 +52,13 @@ AllowOverride None
 
 **允许所有客户机的访问**
 
-```
+```xml
 # apache2.2
 Order allow deny
 Allow from all
 ```
+
+
 ```
 # apache2.4
 Require all granted 
@@ -64,6 +72,8 @@ Order deny, allow
 Deny from hacker.com
 Deny from 192.168.16.111
 ```
+
+
 ```
 # apache2.4
 Require not hacker.com
@@ -76,6 +86,8 @@ Require not 192.168.16.111
 Order allow, deny
 Allow from 192.168.16.0/24 # 除192.168.16.0/24一概禁止
 ```
+
+
 ```
 # apache2.4
 Require all denied
@@ -103,16 +115,88 @@ Require 192.168.16.0/24
 
 - 建立用户密码文件
 
-```bash
+```3bash
 # 第一次运行，创建文件
 htpasswd  -c  /share/soft/apache.passwd  user1  
 # 再运行，添加用户
 htpasswd  -m  /share/soft/apache.passwd  user2
 ```
 
+### 3. 虚拟主机
 
+Apache虚拟主机类型有两种：
+
+- 基于名称的虚拟主机
+- 基于地址或IP的虚拟主机
+
+##### 基于名称的虚拟主机
+
+```shell
+NameVirtualHost *:80
+<VirtualHost 192.168.0.108:80>
+    ServerAdmin webmaster@test.com
+    DocumentRoot /var/www/html/example1_com_dir 
+    ServerName www.example1.com
+</VirtualHost>
+<VirtualHost 192.168.0.108:80>
+    ServerAdmin admin@test.com
+    DocumentRoot /var/www/html/example2_com_dir
+    ServerName www.example2.com
+</VirtualHost>
+```
+
+
+
+##### 同一IP，多个地址的虚拟主机
+
+```xml
+Listen 80
+
+# This is the "main" server running on 172.20.30.40
+ServerName server.example.com
+DocumentRoot "/www/mainserver"
+
+<VirtualHost 172.20.30.50>
+    DocumentRoot "/www/example1"
+    ServerName www.example.com
+
+    # Other directives here ...
+</VirtualHost>
+
+<VirtualHost 172.20.30.50>
+    DocumentRoot "/www/example2"
+    ServerName www.example.org
+
+    # Other directives here ...
+</VirtualHost>
+```
+
+##### 多个IP，多个地址的虚拟主机
+
+```xml
+Listen 192.168.0.100:80
+
+<VirtualHost 192.168.10.108:80>
+    ServerAdmin webmaster@example1.com
+    DocumentRoot /var/www/html/example1_com_dir      
+    ServerName www.example1.com
+</VirtualHost>
+
+<VirtualHost 192.168.10.109:80>
+    ServerAdmin admin@example2.com
+    DocumentRoot /var/www/html/example1_com_dir
+    ServerName www.example2.com
+</VirtualHost>
+
+
+```
+
+
+
+### 4. 
 
 ## 参考文献
 
 [1]. [https://www.cnblogs.com/leezhxing/p/3298060.html](https://www.cnblogs.com/leezhxing/p/3298060.html)
 
+[2]. [https://www.yiibai.com/apache_http](https://www.yiibai.com/apache_http)
