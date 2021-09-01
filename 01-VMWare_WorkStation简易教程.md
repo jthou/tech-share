@@ -23,6 +23,14 @@
 
 #### 在Ubuntu中加载共享文件夹
 
+- 安装`open-vm-tools`
+
+  ```bash
+   jthou@ubuntu:~$ sudo apt install open-vm-tools
+  ```
+
+  
+
 - 查看共享文件夹
 ```shell
  jthou@ubuntu:~$ vmware-hgfsclient 

@@ -141,13 +141,11 @@ appendfilename "appendonly.aof"
 
 ## redis的数据类型和常用命令
 
-### key （键）
+### Key 
 
-### string （字符串）
+### String
 
-### Hashe （哈希）
-
-### List （列表）
+### List
 
 redis的list实际上是一个双向链表
 
@@ -391,10 +389,170 @@ redis> SCARD tool   # 空集合
 
 ### Hash
 
-map集合，
+Redis的Hash可以看做是一个带值的集合，其键值（key）不能重复。
+
+#### hset
+
+```bash
+redis> HSET website google "www.g.cn"       # 如果 field 是哈希表中的一个新建域，并且值设置成功，返回 1 。
+(integer) 1
+redis> HSET website google "www.google.com" # 如果哈希表中域 field 已经存在且旧值已被新值覆盖，返回 0 。
+(integer) 0
+```
+
+#### hsetnx
+
+```bash
+redis> HSETNX nosql key-value-store redis
+(integer) 1
+redis> HSETNX nosql key-value-store redis       # 操作无效，域 key-value-store 已存在
+(integer) 0
+```
+
+
+
+#### hget
+
+```bash
+# 域存在
+redis> HSET site redis redis.com
+(integer) 1
+redis> HGET site redis
+"redis.com"
+# 域不存在
+redis> HGET site mysql
+(nil)
+```
+
+#### hexists
+
+```bash
+redis> HEXISTS phone myphone # 如果哈希表不含有给定域，或 key 不存在，返回 0 。
+(integer) 0
+redis> HSET phone myphone nokia-1110   # 如果哈希表含有给定域，返回 1 。
+(integer) 1
+redis> HEXISTS phone myphone
+(integer) 1
+```
+
+#### hlen
+
+```bash
+redis> HSET db redis redis.com
+(integer) 1
+redis> HSET db mysql mysql.com
+(integer) 1
+redis> HLEN db
+(integer) 2
+redis> HSET db mongodb mongodb.org
+(integer) 1
+redis> HLEN db # 哈希表中域的数量。
+(integer) 3
+```
+
+#### hkeys
+
+```bash
+# 哈希表非空
+redis> HMSET website google www.google.com yahoo www.yahoo.com
+OK
+redis> HKEYS website # 返回一个包含哈希表中所有域的表。
+1) "google"
+2) "yahoo"
+
+# 空哈希表/key不存在
+redis> EXISTS fake_key
+(integer) 0
+redis> HKEYS fake_key  # 当 key 不存在时，返回一个空表。
+(empty list or set)
+```
+
+#### hvals
+
+```bash
+# 非空哈希表
+redis> HMSET website google www.google.com yahoo www.yahoo.com
+OK
+redis> HVALS website
+1) "www.google.com"
+2) "www.yahoo.com"
+
+# 空哈希表/不存在的key
+redis> EXISTS not_exists
+(integer) 0
+redis> HVALS not_exists
+(empty list or set)
+```
+
+
+
+#### hmset
 
 ```
-set myhash field
+redis> HMSET website google www.google.com yahoo www.yahoo.com
+OK
+redis> HGET website google
+"www.google.com"
+redis> HGET website yahoo
+"www.yahoo.com"
+```
+
+#### hmget
+
+```bash
+redis> HMSET pet dog "doudou" cat "nounou"    # 一次设置多个域
+OK
+redis> HMGET pet dog cat fake_pet             # 返回值的顺序和传入参数的顺序一样
+1) "doudou"
+2) "nounou"
+3) (nil)                                      # 不存在的域返回nil值
+```
+
+#### hgetall
+
+```bash
+redis> HSET people jack "Jack Sparrow"
+(integer) 1
+redis> HSET people gump "Forrest Gump"
+(integer) 1
+redis> HGETALL people
+1) "jack"          # 域
+2) "Jack Sparrow"  # 值
+3) "gump"
+4) "Forrest Gump"
+```
+
+#### hincrby
+
+#### hdel
+
+```bash
+# 测试数据
+redis> HGETALL abbr
+1) "a"
+2) "apple"
+3) "b"
+4) "banana"
+5) "c"
+6) "cat"
+7) "d"
+8) "dog"
+
+# 删除单个域
+redis> HDEL abbr a
+(integer) 1
+
+# 删除不存在的域
+redis> HDEL abbr not-exists-field
+(integer) 0
+
+# 删除多个域
+redis> HDEL abbr b c
+(integer) 2
+
+redis> HGETALL abbr
+1) "d"
+2) "dog"
 ```
 
 
