@@ -143,6 +143,501 @@ appendfilename "appendonly.aof"
 
 ### Key 
 
+#### keys
+
+```bash
+redis> MSET one 1 two 2 three 3 four 4  # 一次设置 4 个 key
+OK
+redis> KEYS *o*
+1) "four"
+2) "two"
+3) "one"
+redis> KEYS t??
+1) "two"
+redis> KEYS t[w]*
+1) "two"
+redis> KEYS *  # 匹配数据库内所有 key
+1) "four"
+2) "three"
+3) "two"
+4) "one"
+```
+
+> KEYS的速度非常快，但在一个大的数据库中使用它仍然可能造成性能问题，如果你需要从一个数据集中查找特定的 `key` ，你最好还是用 Redis 的集合结构(set)来代替。
+
+#### del
+
+```bash
+#  删除单个 key
+redis> SET name huangz
+OK
+redis> DEL name
+(integer) 1
+
+# 删除一个不存在的 key
+redis> EXISTS phone
+(integer) 0
+redis> DEL phone # 失败，没有 key 被删除
+(integer) 0
+
+# 同时删除多个 key
+redis> SET name "redis"
+OK
+redis> SET type "key-value store"
+OK
+redis> SET website "redis.com"
+OK
+redis> DEL name type website
+(integer) 3
+```
+
+#### exists
+
+```bash
+redis> SET db "redis"
+OK
+redis> EXISTS db
+(integer) 1
+redis> DEL db
+(integer) 1
+redis> EXISTS db
+(integer) 0
+```
+
+#### dump/restore
+
+```bash
+# 序列化给定 key ，并返回被序列化的值，使用 RESTORE 命令可以将这个值反序列化为 Redis 键。
+redis> SET greeting "hello, dumping world!"
+OK
+redis> DUMP greeting
+"\x00\x15hello, dumping world!\x06\x00E\xa0Z\x82\xd8r\xc1\xde"
+
+#如果 key 不存在，那么返回 nil 。
+redis> DUMP not-exists-key
+(nil)
+
+# RESTORE key ttl serialized-value 
+# 参数 ttl 以毫秒为单位为 key 设置生存时间；如果 ttl 为 0 ，那么不设置生存时间。
+redis> RESTORE greeting-again 0 "\x00\x15hello, dumping world!\x06\x00E\xa0Z\x82\xd8r\xc1\xde"
+OK
+redis> GET greeting-again
+"hello, dumping world!"
+
+# 使用错误的值进行反序列化
+redis> RESTORE fake-message 0 "hello moto moto blah blah"  
+(error) ERR DUMP payload version or checksum are wrong
+```
+
+#### expire/ttl
+
+```bash
+redis> SET cache_page "www.google.com"
+OK
+
+redis> EXPIRE cache_page 30  # 设置过期时间为 30 秒
+(integer) 1
+
+redis> TTL cache_page    # 查看剩余生存时间
+(integer) 23
+
+redis> EXPIRE cache_page 30000   # 更新过期时间
+(integer) 1
+
+redis> TTL cache_page
+(integer) 29996
+```
+
+#### expireat
+
+```bash
+#用于为 key 设置生存时间, 不同在于 EXPIREAT 命令接受的时间参数是 UNIX 时间戳(unix timestamp)。
+redis> SET cache www.google.com
+OK
+
+redis> EXPIREAT cache 1355292000     # 这个 key 将在 2012.12.12 过期
+(integer) 1
+
+redis> TTL cache
+(integer) 45081860
+```
+
+#### persist
+
+```bash
+# 移除给定 key 的生存时间，将这个 key 从『易失的』(带生存时间 key )转换成『持久的』
+redis> SET mykey "Hello"
+OK
+redis> EXPIRE mykey 10  # 为 key 设置生存时间
+(integer) 1
+redis> TTL mykey
+(integer) 10
+redis> PERSIST mykey    # 移除 key 的生存时间
+(integer) 1
+redis> TTL mykey
+(integer) -1
+```
+
+
+
+#### move
+
+```bash
+# key 存在于当前数据库
+redis> SELECT 0                             # redis默认使用数据库 0，为了清晰起见，这里再显式指定一次。
+OK
+redis> SET song "secret base - Zone"
+OK
+redis> MOVE song 1                          # 将 song 移动到数据库 1
+(integer) 1
+redis> EXISTS song                          # song 已经被移走
+(integer) 0
+redis> SELECT 1                             # 使用数据库 1
+OK
+redis:1> EXISTS song                        # 证实 song 被移到了数据库 1 (注意命令提示符变成了"redis:1"，表明正在使用数据库 1)
+(integer) 1
+
+
+# 当 key 不存在的时候
+redis:1> EXISTS fake_key
+(integer) 0
+redis:1> MOVE fake_key 0                    # 试图从数据库 1 移动一个不存在的 key 到数据库 0，失败
+(integer) 0
+redis:1> select 0                           # 使用数据库0
+OK
+redis> EXISTS fake_key                      # 证实 fake_key 不存在
+(integer) 0
+
+
+# 当源数据库和目标数据库有相同的 key 时
+redis> SELECT 0                             # 使用数据库0
+OK
+redis> SET favorite_fruit "banana"
+OK
+redis> SELECT 1                             # 使用数据库1
+OK
+redis:1> SET favorite_fruit "apple"
+OK
+redis:1> SELECT 0                           # 使用数据库0，并试图将 favorite_fruit 移动到数据库 1
+OK
+redis> MOVE favorite_fruit 1                # 因为两个数据库有相同的 key，MOVE 失败
+(integer) 0
+redis> GET favorite_fruit                   # 数据库 0 的 favorite_fruit 没变
+"banana"
+redis> SELECT 1
+OK
+redis:1> GET favorite_fruit                 # 数据库 1 的 favorite_fruit 也是
+"apple"
+```
+
+#### rename
+
+```bash
+# key 存在且 newkey 不存在
+redis> SET message "hello world"
+OK
+redis> RENAME message greeting
+OK
+redis> EXISTS message               # message 不复存在
+(integer) 0
+redis> EXISTS greeting              # greeting 取而代之
+(integer) 1
+
+# 当 key 不存在时，返回错误
+redis> RENAME fake_key never_exists
+(error) ERR no such key
+
+# newkey 已存在时， RENAME 会覆盖旧 newkey
+redis> SET pc "lenovo"
+OK
+redis> SET personal_computer "dell"
+OK
+redis> RENAME pc personal_computer
+OK
+redis> GET pc
+(nil)
+redis:1> GET personal_computer      # 原来的值 dell 被覆盖了
+"lenovo"
+```
+
+#### renamenx
+
+```bash
+# newkey 不存在，改名成功
+redis> SET player "MPlyaer"
+OK
+redis> EXISTS best_player
+(integer) 0
+
+redis> RENAMENX player best_player
+(integer) 1
+
+# newkey存在时，失败
+redis> SET animal "bear"
+OK
+redis> SET favorite_animal "butterfly"
+OK
+redis> RENAMENX animal favorite_animal
+(integer) 0
+redis> get animal
+"bear"
+redis> get favorite_animal
+"butterfly"
+```
+
+#### type
+
+```bash
+# 字符串
+redis> SET weather "sunny"
+OK
+redis> TYPE weather
+string
+
+# 列表
+redis> LPUSH book_list "programming in scala"
+(integer) 1
+redis> TYPE book_list
+list
+
+# 集合
+redis> SADD pat "dog"
+(integer) 1
+redis> TYPE pat
+set
+```
+
+#### sort
+
+```bash
+### 一般 SORT 用法
+redis> LPUSH today_cost 30 1.5 10 8
+(integer) 4
+
+# 默认为正序排序
+redis> SORT today_cost
+1) "1.5"
+2) "8"
+3) "10"
+4) "30"
+
+# 逆序排序
+redis 127.0.0.1:6379> SORT today_cost DESC
+1) "30"
+2) "10"
+3) "8"
+4) "1.5"
+
+### 使用 ALPHA 修饰符对字符串进行排序
+redis> LPUSH website "www.reddit.com"
+(integer) 1
+redis> LPUSH website "www.slashdot.com"
+(integer) 2
+redis> LPUSH website "www.infoq.com"
+(integer) 3
+
+# 默认（按数字）排序
+redis> SORT website
+1) "www.infoq.com"
+2) "www.slashdot.com"
+3) "www.reddit.com"
+
+# 按字符排序
+redis> SORT website ALPHA
+1) "www.infoq.com"
+2) "www.reddit.com"
+3) "www.slashdot.com"
+
+### 使用 LIMIT 修饰符限制返回结果， offset 指定要跳过的元素数量。count 指定跳过 offset 个指定的元素之后，要返回多少个对象。
+# 添加测试数据，列表值为 1 指 10
+redis 127.0.0.1:6379> RPUSH rank 1 3 5 7 9
+(integer) 5
+redis 127.0.0.1:6379> RPUSH rank 2 4 6 8 10
+(integer) 10
+
+# 返回列表中最小的 5 个值
+redis 127.0.0.1:6379> SORT rank LIMIT 0 5
+1) "1"
+2) "2"
+3) "3"
+4) "4"
+5) "5"
+
+# 返回从大到小排序的前 5 个对象
+redis 127.0.0.1:6379> SORT rank LIMIT 0 5 DESC
+1) "10"
+2) "9"
+3) "8"
+4) "7"
+5) "6"
+
+### 使用外部 key 进行排序
+# admin
+redis 127.0.0.1:6379> LPUSH uid 1
+(integer) 1
+redis 127.0.0.1:6379> SET user_name_1 admin
+OK
+redis 127.0.0.1:6379> SET user_level_1 9999
+OK
+
+# jack
+redis 127.0.0.1:6379> LPUSH uid 2
+(integer) 2
+redis 127.0.0.1:6379> SET user_name_2 jack
+OK
+redis 127.0.0.1:6379> SET user_level_2 10
+OK
+
+# peter
+redis 127.0.0.1:6379> LPUSH uid 3
+(integer) 3
+redis 127.0.0.1:6379> SET user_name_3 peter
+OK
+redis 127.0.0.1:6379> SET user_level_3 25
+OK
+
+# mary
+redis 127.0.0.1:6379> LPUSH uid 4
+(integer) 4
+redis 127.0.0.1:6379> SET user_name_4 mary
+OK
+redis 127.0.0.1:6379> SET user_level_4 70
+OK
+
+# 按uid排序
+redis 127.0.0.1:6379> SORT uid
+1) "1"      # admin
+2) "2"      # jack
+3) "3"      # peter
+4) "4"      # mary
+
+# 按user_level排序
+redis 127.0.0.1:6379> SORT uid BY user_level_*
+1) "2"      # jack , level = 10
+2) "3"      # peter, level = 25
+3) "4"      # mary, level = 70
+4) "1"      # admin, level = 9999
+
+# 先排序 uid ， 再取出键 user_name_{uid} 的值：
+redis 127.0.0.1:6379> SORT uid GET user_name_*
+1) "admin"
+2) "jack"
+3) "peter"
+4) "mary"
+
+# 先按 user_level_{uid} 来排序 uid 列表， 再取出相应的 user_name_{uid} 的值：
+redis 127.0.0.1:6379> SORT uid BY user_level_* GET user_name_*
+1) "jack"       # level = 10
+2) "peter"      # level = 25
+3) "mary"       # level = 70
+4) "admin"      # level = 9999
+
+# 按 uid 分别获取 user_level_{uid} 和 user_name_{uid} ：
+redis 127.0.0.1:6379> SORT uid GET user_level_* GET user_name_*
+1) "9999"       # level
+2) "admin"      # name
+3) "10"
+4) "jack"
+5) "25"
+6) "peter"
+7) "70"
+8) "mary"
+
+### GET 有一个额外的参数规则，那就是 —— 可以用 # 获取被排序键的值。
+### 以下代码就将 uid 的值、及其相应的 user_level_* 和 user_name_* 都返回为结果：
+redis 127.0.0.1:6379> SORT uid GET # GET user_level_* GET user_name_*
+1) "1"          # uid
+2) "9999"       # level
+3) "admin"      # name
+4) "2"
+5) "10"
+6) "jack"
+7) "3"
+8) "25"
+9) "peter"
+10) "4"
+11) "70"
+12) "mary"
+
+### 获取外部键，但不进行排序
+redis 127.0.0.1:6379> SORT uid BY not-exists-key
+1) "4"
+2) "3"
+3) "2"
+4) "1"
+
+### 在不排序的情况下， 获取多个外部键， 相当于执行一个整合的获取操作（类似于 SQL 数据库的 join 关键字）。
+redis 127.0.0.1:6379> SORT uid BY not-exists-key GET # GET user_level_* GET user_name_*
+1) "4"      # id
+2) "70"     # level
+3) "mary"   # name
+4) "3"
+5) "25"
+6) "peter"
+7) "2"
+8) "10"
+9) "jack"
+10) "1"
+11) "9999"
+12) "admin"
+
+### 将哈希表作为 GET 或 BY 的参数
+redis 127.0.0.1:6379> HMSET user_info_1 name admin level 9999
+OK
+redis 127.0.0.1:6379> HMSET user_info_2 name jack level 10
+OK
+redis 127.0.0.1:6379> HMSET user_info_3 name peter level 25
+OK
+redis 127.0.0.1:6379> HMSET user_info_4 name mary level 70
+OK
+
+redis 127.0.0.1:6379> SORT uid BY user_info_*->level
+1) "2"
+2) "3"
+3) "4"
+4) "1"
+redis 127.0.0.1:6379> SORT uid BY user_info_*->level GET user_info_*->name
+1) "jack"
+2) "peter"
+3) "mary"
+4) "admin"
+
+### 保存排序结果
+# 测试数据
+redis 127.0.0.1:6379> RPUSH numbers 1 3 5 7 9
+(integer) 5
+redis 127.0.0.1:6379> RPUSH numbers 2 4 6 8 10
+(integer) 10
+redis 127.0.0.1:6379> LRANGE numbers 0 -1
+1) "1"
+2) "3"
+3) "5"
+4) "7"
+5) "9"
+6) "2"
+7) "4"
+8) "6"
+9) "8"
+10) "10"
+redis 127.0.0.1:6379> SORT numbers STORE sorted-numbers
+(integer) 10
+
+# 排序后的结果
+redis 127.0.0.1:6379> LRANGE sorted-numbers 0 -1
+1) "1"
+2) "2"
+3) "3"
+4) "4"
+5) "5"
+6) "6"
+7) "7"
+8) "8"
+9) "9"
+10) "10"
+```
+
+
+
 ### String
 
 ### List
