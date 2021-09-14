@@ -143,9 +143,10 @@ appendfilename "appendonly.aof"
 
 ### Key 
 
-#### keys
+#### keys/exists/type
 
 ```bash
+### keys
 redis> MSET one 1 two 2 three 3 four 4  # 一次设置 4 个 key
 OK
 redis> KEYS *o*
@@ -161,39 +162,8 @@ redis> KEYS *  # 匹配数据库内所有 key
 2) "three"
 3) "two"
 4) "one"
-```
 
-> KEYS的速度非常快，但在一个大的数据库中使用它仍然可能造成性能问题，如果你需要从一个数据集中查找特定的 `key` ，你最好还是用 Redis 的集合结构(set)来代替。
-
-#### del
-
-```bash
-#  删除单个 key
-redis> SET name huangz
-OK
-redis> DEL name
-(integer) 1
-
-# 删除一个不存在的 key
-redis> EXISTS phone
-(integer) 0
-redis> DEL phone # 失败，没有 key 被删除
-(integer) 0
-
-# 同时删除多个 key
-redis> SET name "redis"
-OK
-redis> SET type "key-value store"
-OK
-redis> SET website "redis.com"
-OK
-redis> DEL name type website
-(integer) 3
-```
-
-#### exists
-
-```bash
+### exists
 redis> SET db "redis"
 OK
 redis> EXISTS db
@@ -202,7 +172,28 @@ redis> DEL db
 (integer) 1
 redis> EXISTS db
 (integer) 0
+
+### type
+# 字符串
+redis> SET weather "sunny"
+OK
+redis> TYPE weather
+string
+
+# 列表
+redis> LPUSH book_list "programming in scala"
+(integer) 1
+redis> TYPE book_list
+list
+
+# 集合
+redis> SADD pat "dog"
+(integer) 1
+redis> TYPE pat
+set
 ```
+
+> KEYS的速度非常快，但在一个大的数据库中使用它仍然可能造成性能问题，如果你需要从一个数据集中查找特定的 `key` ，你最好还是用 Redis 的集合结构(set)来代替。
 
 #### dump/restore
 
@@ -229,42 +220,51 @@ redis> RESTORE fake-message 0 "hello moto moto blah blah"
 (error) ERR DUMP payload version or checksum are wrong
 ```
 
-#### expire/ttl
+#### expire/expireat/ttl/pexpire/pexpireat/pttl/persist
 
 ```bash
+### expire
 redis> SET cache_page "www.google.com"
 OK
-
 redis> EXPIRE cache_page 30  # 设置过期时间为 30 秒
 (integer) 1
-
 redis> TTL cache_page    # 查看剩余生存时间
 (integer) 23
-
 redis> EXPIRE cache_page 30000   # 更新过期时间
 (integer) 1
-
 redis> TTL cache_page
 (integer) 29996
-```
 
-#### expireat
-
-```bash
+### expireat
 #用于为 key 设置生存时间, 不同在于 EXPIREAT 命令接受的时间参数是 UNIX 时间戳(unix timestamp)。
 redis> SET cache www.google.com
 OK
-
 redis> EXPIREAT cache 1355292000     # 这个 key 将在 2012.12.12 过期
 (integer) 1
-
 redis> TTL cache
 (integer) 45081860
-```
 
-#### persist
+### pexpire
+redis> SET mykey "Hello"
+OK
+redis> PEXPIRE mykey 1500
+(integer) 1
+redis> TTL mykey    # TTL 的返回值以秒为单位
+(integer) 2
+redis> PTTL mykey   # PTTL 可以给出准确的毫秒数
+(integer) 1499
 
-```bash
+### pexpireat
+redis> SET mykey "Hello"
+OK
+redis> PEXPIREAT mykey 1555555555005
+(integer) 1
+redis> TTL mykey           # TTL 返回秒
+(integer) 223157079
+redis> PTTL mykey          # PTTL 返回毫秒
+(integer) 223157079318
+
+### persist
 # 移除给定 key 的生存时间，将这个 key 从『易失的』(带生存时间 key )转换成『持久的』
 redis> SET mykey "Hello"
 OK
@@ -278,11 +278,33 @@ redis> TTL mykey
 (integer) -1
 ```
 
-
-
-#### move
+#### del/move/rename/nenamenx
 
 ```bash
+### del
+#  删除单个 key
+redis> SET name huangz
+OK
+redis> DEL name
+(integer) 1
+
+# 删除一个不存在的 key
+redis> EXISTS phone
+(integer) 0
+redis> DEL phone # 失败，没有 key 被删除
+(integer) 0
+
+# 同时删除多个 key
+redis> SET name "redis"
+OK
+redis> SET type "key-value store"
+OK
+redis> SET website "redis.com"
+OK
+redis> DEL name type website
+(integer) 3
+
+### move
 # key 存在于当前数据库
 redis> SELECT 0                             # redis默认使用数据库 0，为了清晰起见，这里再显式指定一次。
 OK
@@ -297,7 +319,6 @@ OK
 redis:1> EXISTS song                        # 证实 song 被移到了数据库 1 (注意命令提示符变成了"redis:1"，表明正在使用数据库 1)
 (integer) 1
 
-
 # 当 key 不存在的时候
 redis:1> EXISTS fake_key
 (integer) 0
@@ -307,7 +328,6 @@ redis:1> select 0                           # 使用数据库0
 OK
 redis> EXISTS fake_key                      # 证实 fake_key 不存在
 (integer) 0
-
 
 # 当源数据库和目标数据库有相同的 key 时
 redis> SELECT 0                             # 使用数据库0
@@ -328,11 +348,8 @@ redis> SELECT 1
 OK
 redis:1> GET favorite_fruit                 # 数据库 1 的 favorite_fruit 也是
 "apple"
-```
 
-#### rename
-
-```bash
+### rename
 # key 存在且 newkey 不存在
 redis> SET message "hello world"
 OK
@@ -358,11 +375,8 @@ redis> GET pc
 (nil)
 redis:1> GET personal_computer      # 原来的值 dell 被覆盖了
 "lenovo"
-```
 
-#### renamenx
-
-```bash
+### renamenx
 # newkey 不存在，改名成功
 redis> SET player "MPlyaer"
 OK
@@ -383,28 +397,6 @@ redis> get animal
 "bear"
 redis> get favorite_animal
 "butterfly"
-```
-
-#### type
-
-```bash
-# 字符串
-redis> SET weather "sunny"
-OK
-redis> TYPE weather
-string
-
-# 列表
-redis> LPUSH book_list "programming in scala"
-(integer) 1
-redis> TYPE book_list
-list
-
-# 集合
-redis> SADD pat "dog"
-(integer) 1
-redis> TYPE pat
-set
 ```
 
 #### sort
@@ -640,6 +632,363 @@ redis 127.0.0.1:6379> LRANGE sorted-numbers 0 -1
 
 ### String
 
+#### set/setnx/get/strlen
+
+```bash
+# 对不存在的键进行设置
+redis 127.0.0.1:6379> SET key "value"
+OK
+redis 127.0.0.1:6379> GET key
+"value"
+
+# 对已存在的键进行设置
+redis 127.0.0.1:6379> SET key "new-value"
+OK
+redis 127.0.0.1:6379> GET key
+"new-value"
+
+# 使用 EX 选项
+redis 127.0.0.1:6379> SET key-with-expire-time "hello" EX 10086
+OK
+redis 127.0.0.1:6379> GET key-with-expire-time
+"hello"
+redis 127.0.0.1:6379> TTL key-with-expire-time
+(integer) 10069
+
+# 使用 PX 选项, PX=expire
+redis 127.0.0.1:6379> SET key-with-pexpire-time "moto" PX 123321
+OK
+redis 127.0.0.1:6379> GET key-with-pexpire-time
+"moto"
+redis 127.0.0.1:6379> PTTL key-with-pexpire-time
+(integer) 111939
+
+# setnx
+redis> EXISTS job                # job 不存在
+(integer) 0
+redis> SETNX job "programmer"    # job 设置成功
+(integer) 1
+redis> SETNX job "code-farmer"   # 尝试覆盖 job ，失败
+(integer) 0
+redis> GET job                   # 没有被覆盖
+"programmer"
+
+# 使用 NX 选项, NX = if not exists. 
+redis 127.0.0.1:6379> SET not-exists-key "value" NX
+OK      # 键不存在，设置成功
+redis 127.0.0.1:6379> GET not-exists-key
+"value"
+redis 127.0.0.1:6379> SET not-exists-key "new-value" NX
+(nil)   # 键已经存在，设置失败
+redis 127.0.0.1:6379> GEt not-exists-key
+"value" # 维持原值不变
+
+# 使用 XX 选项, XX=exists
+redis 127.0.0.1:6379> EXISTS exists-key
+(integer) 0
+redis 127.0.0.1:6379> SET exists-key "value" XX
+(nil)   # 因为键不存在，设置失败
+redis 127.0.0.1:6379> SET exists-key "value"
+OK      # 先给键设置一个值
+redis 127.0.0.1:6379> SET exists-key "new-value" XX
+OK      # 设置新值成功
+redis 127.0.0.1:6379> GET exists-key
+"new-value"
+
+# NX 或 XX 可以和 EX 或者 PX 组合使用
+redis 127.0.0.1:6379> SET key-with-expire-and-NX "hello" EX 10086 NX
+OK
+redis 127.0.0.1:6379> GET key-with-expire-and-NX
+"hello"
+redis 127.0.0.1:6379> TTL key-with-expire-and-NX
+(integer) 10063
+redis 127.0.0.1:6379> SET key-with-pexpire-and-XX "old value"
+OK
+redis 127.0.0.1:6379> SET key-with-pexpire-and-XX "new value" PX 123321
+OK
+redis 127.0.0.1:6379> GET key-with-pexpire-and-XX
+"new value"
+redis 127.0.0.1:6379> PTTL key-with-pexpire-and-XX # pttr, 当 key 不存在时，返回 -2, 当 key 存在但没有设置剩余生存时间时，返回 -1, 否则，以毫秒为单位，返回 key 的剩余生存时间。
+(integer) 112999
+
+# EX 和 PX 可以同时出现，但后面给出的选项会覆盖前面给出的选项
+redis 127.0.0.1:6379> SET key "value" EX 1000 PX 5000000
+OK
+redis 127.0.0.1:6379> TTL key
+(integer) 4993  # 这是 PX 参数设置的值
+redis 127.0.0.1:6379> SET another-key "value" PX 5000000 EX 1000
+OK
+redis 127.0.0.1:6379> TTL another-key
+(integer) 997   # 这是 EX 参数设置的值
+
+### strlen
+# 获取字符串的长度
+redis> SET mykey "Hello world"
+OK
+redis> STRLEN mykey
+(integer) 11
+
+# 不存在的 key 长度为 0
+redis> STRLEN nonexisting
+(integer) 0
+```
+
+#### mset/mget/msetnx/setex/psetex/setrange/getrange
+
+```bash
+redis> MSET date "2012.3.30" time "11:00 a.m." weather "sunny"
+OK
+redis> MGET date time weather
+1) "2012.3.30"
+2) "11:00 a.m."
+3) "sunny"
+
+# 对不存在的 key 进行 MSETNX
+redis> MSETNX rmdbs "MySQL" nosql "MongoDB" key-value-store "redis"
+(integer) 1
+redis> MGET rmdbs nosql key-value-store
+1) "MySQL"
+2) "MongoDB"
+3) "redis"
+
+# MSET 的给定 key 当中有已存在的 key
+redis> MSETNX rmdbs "Sqlite" language "python"  # rmdbs 键已经存在，操作失败
+(integer) 0
+redis> EXISTS language                          # 因为 MSET 是原子性操作，language 没有被设置
+(integer) 0
+redis> GET rmdbs                                # rmdbs 也没有被修改
+"MySQL"
+
+# 在 key 不存在时进行 SETEX
+redis> SETEX cache_user_id 60 10086
+OK
+redis> GET cache_user_id  # 值
+"10086"
+redis> TTL cache_user_id  # 剩余生存时间
+(integer) 49
+
+# key 已经存在时，SETEX 覆盖旧值
+redis> SET cd "timeless"
+OK
+redis> SETEX cd 3000 "goodbye my love"
+OK
+redis> GET cd
+"goodbye my love"
+redis> TTL cd
+(integer) 2997
+
+# PSETEX 这个命令和 SETEX 命令相似，但它以毫秒为单位设置 key 的生存时间，而不是像 SETEX 命令那样，以秒为单位。
+redis> PSETEX mykey 1000 "Hello"
+OK
+redis> PTTL mykey
+(integer) 999
+redis> GET mykey
+"Hello"
+
+### SETRANGE
+# 对非空字符串进行 SETRANGE
+redis> SET greeting "hello world"
+OK
+redis> SETRANGE greeting 6 "Redis"
+(integer) 11
+redis> GET greeting
+"hello Redis"
+
+# 对空字符串/不存在的 key 进行 SETRANGE
+redis> EXISTS empty_string
+(integer) 0
+redis> SETRANGE empty_string 5 "Redis!"   # 对不存在的 key 使用 SETRANGE
+(integer) 11
+redis> GET empty_string                   # 空白处被"\x00"填充
+"\x00\x00\x00\x00\x00Redis!"
+
+### GETRANGE
+redis> SET greeting "hello, my friend"
+OK
+redis> GETRANGE greeting 0 4          # 返回索引0-4的字符，包括4。
+"hello"
+redis> GETRANGE greeting -1 -5        # 不支持回绕操作
+""
+redis> GETRANGE greeting -3 -1        # 负数索引
+"end"
+redis> GETRANGE greeting 0 -1         # 从第一个到最后一个
+"hello, my friend"
+redis> GETRANGE greeting 0 1008611    # 值域范围不超过实际字符串，超过部分自动被符略
+"hello, my friend"
+```
+
+#### incr/incrby/incrbyfloat/decr/decrby
+
+```bash
+### incr (计数器)
+redis> SET page_view 20
+OK
+redis> INCR page_view
+(integer) 21
+redis> GET page_view    # 数字值在 Redis 中以字符串的形式保存
+"21"
+
+### INCRBY
+# key 存在且是数字值
+redis> SET rank 50
+OK
+redis> INCRBY rank 20
+(integer) 70
+redis> GET rank
+"70"
+
+# key 不存在时
+redis> EXISTS counter
+(integer) 0
+redis> INCRBY counter 30
+(integer) 30
+redis> GET counter
+"30"
+
+# key 不是数字值时
+redis> SET book "long long ago..."
+OK
+redis> INCRBY book 200
+(error) ERR value is not an integer or out of range
+
+### INCRBYFLOAT
+# 值和增量都不是指数符号
+redis> SET mykey 10.50
+OK
+redis> INCRBYFLOAT mykey 0.1
+"10.6"
+
+# 值和增量都是指数符号
+redis> SET mykey 314e-2
+OK
+redis> GET mykey                # 用 SET 设置的值可以是指数符号
+"314e-2"
+redis> INCRBYFLOAT mykey 0      # 但执行 INCRBYFLOAT 之后格式会被改成非指数符号
+"3.14"
+
+# 可以对整数类型执行
+redis> SET mykey 3
+OK
+redis> INCRBYFLOAT mykey 1.1
+"4.1"
+
+# 后跟的 0 会被移除
+redis> SET mykey 3.0
+OK
+redis> GET mykey                                    # SET 设置的值小数部分可以是 0
+"3.0"
+redis> INCRBYFLOAT mykey 1.000000000000000000000    # 但 INCRBYFLOAT 会将无用的 0 忽略掉，有需要的话，将浮点变为整数
+"4"
+redis> GET mykey
+"4"
+
+### DECR
+# 对存在的数字值 key 进行 DECR
+redis> SET failure_times 10
+OK
+redis> DECR failure_times
+(integer) 9
+
+# 对不存在的 key 值进行 DECR
+redis> EXISTS count
+(integer) 0
+redis> DECR count
+(integer) -1
+
+# 对存在但不是数值的 key 进行 DECR
+redis> SET company YOUR_CODE_SUCKS.LLC
+OK
+redis> DECR company
+(error) ERR value is not an integer or out of range
+
+### DECRBY
+# 对已存在的 key 进行 DECRBY
+redis> SET count 100
+OK
+redis> DECRBY count 20
+(integer) 80
+
+# 对不存在的 key 进行DECRBY
+redis> EXISTS pages
+(integer) 0
+redis> DECRBY pages 10
+(integer) -10
+
+```
+
+限速器
+
+```lua
+FUNCTION LIMIT_API_CALL(ip)
+current = LLEN(ip)
+IF current > 10 THEN
+    ERROR "too many requests per second"
+ELSE
+    IF EXISTS(ip) == FALSE
+        MULTI
+            RPUSH(ip,ip)
+            EXPIRE(ip,1)
+        EXEC
+    ELSE
+        RPUSHX(ip,ip)
+    END
+    PERFORM_API_CALL()
+END
+```
+
+#### setbit/getbit/bitcount/bitop
+
+```bash
+###setbit 语法： SETBIT key offset value
+redis> SETBIT bit 10086 1
+(integer) 0
+redis> GETBIT bit 10086
+(integer) 1
+redis> GETBIT bit 100   # bit 默认被初始化为 0
+(integer) 0
+
+### bitcount
+redis> BITCOUNT bits
+(integer) 0
+redis> SETBIT bits 0 1          # 0001
+(integer) 0
+redis> BITCOUNT bits
+(integer) 1
+redis> SETBIT bits 3 1          # 1001
+(integer) 0
+redis> BITCOUNT bits
+(integer) 2
+
+### bitop
+# 语法： BITOP operation destkey key [key ...]
+# - BITOP AND destkey key [key ...] ，对一个或多个 key 求逻辑并，并将结果保存到 destkey 。
+# - BITOP OR destkey key [key ...] ，对一个或多个 key 求逻辑或，并将结果保存到 destkey 。
+# - BITOP XOR destkey key [key ...] ，对一个或多个 key 求逻辑异或，并将结果保存到 destkey 。
+# - BITOP NOT destkey key ，对给定 key 求逻辑非，并将结果保存到 destkey 。
+redis> SETBIT bits-1 0 1        # bits-1 = 1001
+(integer) 0
+redis> SETBIT bits-1 3 1
+(integer) 0
+redis> SETBIT bits-2 0 1        # bits-2 = 1011
+(integer) 0
+redis> SETBIT bits-2 1 1
+(integer) 0
+redis> SETBIT bits-2 3 1
+(integer) 0
+redis> BITOP AND and-result bits-1 bits-2
+(integer) 1
+redis> GETBIT and-result 0      # and-result = 1001
+(integer) 1
+redis> GETBIT and-result 1
+(integer) 0
+redis> GETBIT and-result 2
+(integer) 0
+redis> GETBIT and-result 3
+(integer) 1
+```
+
+
+
 ### List
 
 redis的list实际上是一个双向链表
@@ -840,14 +1189,7 @@ redis> LRANGE greet 0 -1
 
 set中的值不能重复。
 
-#### SADD
-**SADD key member [member ...]**
-- 将一个或多个 `member` 元素加入到集合 `key` 当中，已经存在于集合的 `member` 元素将被忽略。
-- 假如 `key` 不存在，则创建一个只包含 `member` 元素作成员的集合。
-- 当 `key` 不是集合类型时，返回一个错误。
-**时间复杂度:** O(N)， `N` 是被添加的元素的数量。
-**返回值:** 被添加到集合中的新元素的数量，不包括被忽略的元素。
-
+#### sadd
 ```bash
 # 添加单个元素
 redis> SADD bbs "discuz.net"
@@ -865,10 +1207,6 @@ redis> SMEMBERS bbs
 ```
 
 #### SCARD
-
-返回集合 `key` 的基数(集合中元素的数量)。
-**时间复杂度:**O(1)
-**返回值：**集合的基数。当 `key` 不存在时，返回 `0` 。
 
 ```bash
 redis> SADD tool pc printer phone
