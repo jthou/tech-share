@@ -109,23 +109,17 @@ daemonize yes
 save 900 1
 save 300 10
 save 60 10000
-
 ```
 
 ```ini
 # The filename where to dump the DB
 dbfilename dump.rdb
-
 ```
 
 ```ini
 # The name of the append only file (default: "appendonly.aof")
-
 appendfilename "appendonly.aof"
-
 ```
-
-
 
 #### 客户端连接
 
@@ -138,6 +132,30 @@ appendfilename "appendonly.aof"
 ### 持久化
 
 ### 安全
+
+### 主从复制
+
+- Redis 使用异步复制。从 Redis 2.8 开始， 从服务器会以每秒一次的频率向主服务器报告复制流（replication stream）的处理进度。
+- 一个主服务器可以有多个从服务器，从服务器也可以有自己的从服务器， 多个从服务器之间可以构成一个图状结构。
+- 复制功能不会阻塞主服务器，也不会阻塞从服务器。
+- 在从服务器删除旧版本数据集并载入新版本数据集的那段时间内， 连接请求会被阻塞。
+- 可以配置从服务器， 让它在与主服务器之间的连接断开时， 向客户端发送一个错误。
+- 可以通过复制功能来让主服务器免于执行持久化操作： 只要关闭主服务器的持久化功能， 然后由从服务器去执行持久化操作即可。
+
+1， 在配置文件中加上
+
+```ini
+slaveof 192.168.1.1 6379
+```
+
+2，用命令
+
+```bash
+127.0.0.1:6379> SLAVEOF 192.168.1.1 10086
+OK
+```
+
+
 
 ## redis的数据类型和常用命令
 
@@ -1001,6 +1019,7 @@ redis的list实际上是一个双向链表
 **把list用做栈或者队列**
 
 ```bash
+## lpush
 127.0.0.1:6379[2]> lpush list one  # 左侧插入
 (integer) 1
 127.0.0.1:6379[2]> lpush list two
@@ -1011,6 +1030,8 @@ redis的list实际上是一个双向链表
 1) "three"
 2) "two"
 3) "one"
+
+## rpush
 127.0.0.1:6379[2]> rpush list four   # 右侧插入
 (integer) 4
 127.0.0.1:6379[2]> lrange list 0 -1
@@ -1018,41 +1039,61 @@ redis的list实际上是一个双向链表
 2) "two"
 3) "one"
 4) "four"
+
+## lpop
 127.0.0.1:6379[2]> lpop list # 左侧pop
 "three"
+
+## rpop
 127.0.0.1:6379[2]> rpop list # 右侧pop
 "four"
 127.0.0.1:6379[2]> lrange list 0 -1
 1) "two"
 2) "one"
 
-```
-
-#### lindex
-
-**通过下标获取值**
-
-```bash
-127.0.0.1:6379[2]> lindex list 1
-"one"
 
 ```
 
-#### llen
 
-**获取list的长度**
+
+#### llen/lset/lindex
 
 ```bash
+## llen
 127.0.0.1:6379[2]> llen list
 (integer) 2
 
+## lset
+# 对空列表(key 不存在)进行 LSET
+redis> EXISTS list
+(integer) 0
+redis> LSET list 0 item
+(error) ERR no such key
+# 对非空列表进行 LSET
+redis> LPUSH job "cook food"
+(integer) 1
+redis> LRANGE job 0 0
+1) "cook food"
+redis> LSET job 0 "play game"
+OK
+redis> LRANGE job  0 0
+1) "play game"
+
+# index 超出范围
+redis> LLEN list  # 列表长度为 1
+(integer) 1
+redis> LSET list 3 'out of range'
+(error) ERR index out of range
+
+## lindex
+127.0.0.1:6379[2]> lindex list 1
+"one"
 ```
 
-#### lrem
-
-**移除指定的值**
+#### lrem/trim
 
 ```bash
+## lrem
 127.0.0.1:6379[2]>  rpush list one  
 (integer) 3
 127.0.0.1:6379[2]> lrange list 0 -1
@@ -1064,11 +1105,7 @@ redis的list实际上是一个双向链表
 127.0.0.1:6379[2]> lrange list 0 -1
 1) "two"
 
-```
-
-#### trim
-
-```bash
+## trim
 127.0.0.1:6379[2]> del list
 (integer) 1
 127.0.0.1:6379[2]> lrange list 0 -1
@@ -1086,7 +1123,6 @@ OK
 1) "three"
 2) "two"
 3) "one"
-
 ```
 
 #### rpoplpush
@@ -1105,33 +1141,6 @@ OK
 2) "two"
 127.0.0.1:6379[2]> lrange list2 0 -1
 1) "one"
-```
-
-#### lset
-
-**设置指定下标的值**
-
-```bash
-# lset
-# 对空列表(key 不存在)进行 LSET
-redis> EXISTS list
-(integer) 0
-redis> LSET list 0 item
-(error) ERR no such key
-# 对非空列表进行 LSET
-redis> LPUSH job "cook food"
-(integer) 1
-redis> LRANGE job 0 0
-1) "cook food"
-redis> LSET job 0 "play game"
-OK
-redis> LRANGE job  0 0
-1) "play game"
-# index 超出范围
-redis> LLEN list                    # 列表长度为 1
-(integer) 1
-redis> LSET list 3 'out of range'
-(error) ERR index out of range
 ```
 
 #### linsert
