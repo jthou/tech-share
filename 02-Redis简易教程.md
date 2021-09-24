@@ -58,7 +58,7 @@
 
 ## redis 安装与配置 （Ubuntu）
 
-### 编译
+### 编译与安装
 
 ```bash
   sudo apt install tcl -y
@@ -70,18 +70,54 @@
   sudo make install
 ```
 
-### redis 配置
-
-#### 启动 daemon 模式
+### daemon 模式
 
 ```ini
 # By default Redis does not run as a daemon. Use 'yes' if you need it.
 # Note that Redis will write a pid file in /var/run/redis.pid when daemonized.
 daemonize yes
-
 ```
 
-#### 持久化
+### 持久化
+
+- RDB 持久化
+
+  以在指定的时间间隔内生成数据集的时间点快照（point-in-time snapshot）。
+
+- AOF 持久化
+
+  记录服务器执行的所有写操作命令，并在服务器启动时，通过重新执行这些命令来还原数据集。
+
+- 以同时使用 AOF 持久化和 RDB 持久化。 在这种情况下， 当 Redis 重启时， 它会优先使用 AOF 文件来还原数据集， 因为 AOF 文件保存的数据集通常比 RDB 文件所保存的数据集更完整。
+
+#### RDB持久化
+
+RDB 是一个非常紧凑（compact）的文件，它保存了 Redis 在某个时间点上的数据集。 
+
+RDB的优点：
+
+- 非常适合用于进行备份。
+- 非常适用于灾难恢复。
+- 在恢复大数据集时的速度比 AOF 的恢复速度要快。
+
+RDB的缺点：
+
+- 如果你需要尽量避免在服务器故障时丢失数据，那么 RDB 不适合你。
+- 每次保存 RDB 的时候，Redis 都要 `fork()` 出一个子进程，并由子进程来进行实际的持久化工作。 在数据集比较庞大时， `fork()` 可能会非常耗时，造成服务器在某某毫秒内停止处理客户端； 如果数据集非常巨大，并且 CPU 时间非常紧张的话，那么这种停止时间甚至可能会长达整整一秒。
+
+#### AOF持久化
+
+AOF 文件有序地保存了对数据库执行的所有写入操作。
+
+AOF的优点：
+
+- 即使日志因为某些原因而包含了未写入完整的命令（比如写入时磁盘已满，写入中途停机，等等）， `redis-check-aof` 工具也可以轻易地修复这种问题。
+
+- AOF 文件是一个只进行追加操作的日志文件（append only log），即使日志因为某些原因而包含了未写入完整的命令（比如写入时磁盘已满，写入中途停机，等等）， `redis-check-aof` 工具也可以轻易地修复这种问题。
+
+- Redis 可以在 AOF 文件体积变得过大时，自动地在后台对 AOF 进行重写： 重写后的新 AOF 文件包含了恢复当前数据集所需的最小命令集合。整个重写操作是绝对安全的，因为 Redis 在创建新 AOF 文件的过程中，会继续将命令追加到现有的 AOF 文件里面，即使重写过程中发生停机，现有的 AOF 文件也不会丢失。 而一旦新 AOF 文件创建完毕，Redis 就会从旧 AOF 文件切换到新 AOF 文件，并开始对新 AOF 文件进行追加操作。
+
+举个例子， 如果你不小心执行了 FLUSHALL 命令， 但只要 AOF 文件未被重写， 那么只要停止服务器， 移除 AOF 文件末尾的 FLUSHALL* 命令， 并重启 Redis ， 就可以将数据集恢复到 FLUSHALL执行之前的状态。
 
 ```ini
 ################################ SNAPSHOTTING  ################################
@@ -121,7 +157,7 @@ dbfilename dump.rdb
 appendfilename "appendonly.aof"
 ```
 
-#### 客户端连接
+### 客户端连接
 
 ### 服务启动
 
@@ -142,6 +178,8 @@ appendfilename "appendonly.aof"
 - 可以配置从服务器， 让它在与主服务器之间的连接断开时， 向客户端发送一个错误。
 - 可以通过复制功能来让主服务器免于执行持久化操作： 只要关闭主服务器的持久化功能， 然后由从服务器去执行持久化操作即可。
 
+#### 从服务器配置
+
 1， 在配置文件中加上
 
 ```ini
@@ -155,9 +193,39 @@ slaveof 192.168.1.1 6379
 OK
 ```
 
+#### 只读模式配置
 
+只读模式由 `redis.conf` 文件中的 `slave-read-only` 选项控制， 也可以通过 CONFIG SET命令来开启或关闭这个模式。
 
-## redis的数据类型和常用命令
+#### 授权
+
+如果主服务器通过 `requirepass` 选项设置了密码，
+
+1，在配置文件中加上
+
+```ini
+masterauth <password>
+```
+
+2，用命令
+
+```bash
+config set masterauth <password>
+```
+
+#### 主服务器只在有至少 N 个从服务器的情况下，才执行写操作
+
+配置
+
+```ini
+min-slaves-to-write <number of slaves>
+min-slaves-max-lag <number of seconds>`
+```
+
+- 如果至少有 `min-slaves-to-write` 个从服务器， 并且这些服务器的延迟值都少于 `min-slaves-max-lag` 秒， 那么主服务器就会执行客户端请求的写操作。
+- 另一方面， 如果条件达不到 `min-slaves-to-write` 和 `min-slaves-max-lag` 所指定的条件， 那么写操作就不会被执行， 主服务器会向请求执行写操作的客户端返回一个错误。
+
+## 数据类型和常用命令
 
 ### Key 
 
@@ -1196,10 +1264,14 @@ redis> LRANGE greet 0 -1
 
 ### Set（集合）
 
+#### 添加/删除/读取
+
 set中的值不能重复。
 
-#### sadd
+##### sadd/spop/srem/smove/
+
 ```bash
+### sadd
 # 添加单个元素
 redis> SADD bbs "discuz.net"
 (integer) 1
@@ -1213,11 +1285,89 @@ redis> SMEMBERS bbs
 1) "discuz.net"
 2) "groups.google.com"
 3) "tianya.cn"
+
+### spop
+redis> SMEMBERS db
+1) "MySQL"
+2) "MongoDB"
+3) "Redis"
+redis> SPOP db
+"Redis"
+redis> SMEMBERS db
+1) "MySQL"
+2) "MongoDB"
+redis> SPOP db
+"MySQL"
+redis> SMEMBERS db
+1) "MongoDB"
+
+### srem
+# 测试数据
+redis> SMEMBERS languages
+1) "c"
+2) "lisp"
+3) "python"
+4) "ruby"
+# 移除单个元素
+redis> SREM languages ruby
+(integer) 1
+# 移除不存在元素
+redis> SREM languages non-exists-language
+(integer) 0
+# 移除多个元素
+redis> SREM languages lisp python c
+(integer) 3
+redis> SMEMBERS languages
+(empty list or set)
+
+### smove 
+# 语法： SMOVE source destination member
+redis> SMEMBERS songs
+1) "Billie Jean"
+2) "Believe Me"
+redis> SMEMBERS my_songs
+(empty list or set)
+redis> SMOVE songs my_songs "Believe Me"
+(integer) 1
+redis> SMEMBERS songs
+1) "Billie Jean"
+redis> SMEMBERS my_songs
+1) "Believe Me"
 ```
 
-#### SCARD
+#### 集合运算
+
+##### sdiff/sdiffstore/sinter/sinterstore/
 
 ```bash
+### sdiff
+# 差集
+redis> SMEMBERS peter's_movies
+1) "bet man"
+2) "start war"
+3) "2012"
+redis> SMEMBERS joe's_movies
+1) "hi, lady"
+2) "Fast Five"
+3) "2012"
+redis> SDIFF peter's_movies joe's_movies
+1) "bet man"
+2) "start war"
+
+### sdiffstore
+# SDIFFSTORE destination key [key ...]
+# 和 SDIFF 类似，但它将结果保存到 destination 集合，而不是简单地返回结果集。
+```
+
+
+
+#### 集合查询
+
+##### scard/smembers/srandmember
+
+```bash
+### scard
+# 返回集合的基数，当集合不存在时，返回0
 redis> SADD tool pc printer phone
 (integer) 3
 redis> SCARD tool   # 非空集合
@@ -1226,8 +1376,403 @@ redis> DEL tool
 (integer) 1
 redis> SCARD tool   # 空集合
 (integer) 0
+
+### smembers
+redis> SMEMBERS joe's_movies
+1) "hi, lady"
+2) "Fast Five"
+3) "2012"
+redis> SISMEMBER joe's_movies "bet man"
+(integer) 0
+redis> SISMEMBER joe's_movies "Fast Five"
+(integer) 1
+
+### srandmembers
+# 添加元素
+redis> SADD fruit apple banana cherry
+(integer) 3
+# 只给定 key 参数，返回一个随机元素
+redis> SRANDMEMBER fruit
+"cherry"
+redis> SRANDMEMBER fruit
+"apple"
+# 给定 3 为 count 参数，返回 3 个随机元素
+# 每个随机元素都不相同
+redis> SRANDMEMBER fruit 3
+1) "apple"
+2) "banana"
+3) "cherry"
+# 给定 -3 为 count 参数，返回 3 个随机元素
+# 元素可能会重复出现多次
+redis> SRANDMEMBER fruit -3
+1) "banana"
+2) "cherry"
+3) "apple"
+redis> SRANDMEMBER fruit -3
+1) "apple"
+2) "apple"
+3) "cherry"
+# 如果 count 是整数，且大于等于集合基数，那么返回整个集合
+redis> SRANDMEMBER fruit 10
+1) "apple"
+2) "banana"
+3) "cherry"
+# 如果 count 是负数，且 count 的绝对值大于集合的基数
+# 那么返回的数组的长度为 count 的绝对值
+redis> SRANDMEMBER fruit -10
+1) "banana"
+2) "apple"
+3) "banana"
+4) "cherry"
+5) "apple"
+6) "apple"
+7) "cherry"
+8) "apple"
+9) "apple"
+10) "banana"
+# SRANDMEMBER 并不会修改集合内容
+redis> SMEMBERS fruit
+1) "apple"
+2) "cherry"
+3) "banana"
+# 集合为空时返回 nil 或者空数组
+redis> SRANDMEMBER not-exists
+(nil)
+redis> SRANDMEMBER not-eixsts 10
+(empty list or set)
 ```
-### Sorted Set
+### SortedSet
+
+#### 添加/删除/读取/修改
+
+##### zadd/zrem/zincrby/zremrangebyrank/zremrangebyscore
+
+```bash
+### zadd
+# 语法： ZADD key score member [[score member] [score member] ...]
+# 添加单个元素
+redis> ZADD page_rank 10 google.com
+(integer) 1
+# 添加多个元素
+redis> ZADD page_rank 9 baidu.com 8 bing.com
+(integer) 2
+redis> ZRANGE page_rank 0 -1 WITHSCORES
+1) "bing.com"
+2) "8"
+3) "baidu.com"
+4) "9"
+5) "google.com"
+6) "10"
+# 添加已存在元素，且 score 值不变
+redis> ZADD page_rank 10 google.com
+(integer) 0
+redis> ZRANGE page_rank 0 -1 WITHSCORES  # 没有改变
+1) "bing.com"
+2) "8"
+3) "baidu.com"
+4) "9"
+5) "google.com"
+6) "10"
+# 添加已存在元素，但是改变 score 值
+redis> ZADD page_rank 6 bing.com
+(integer) 0
+redis> ZRANGE page_rank 0 -1 WITHSCORES  # bing.com 元素的 score 值被改变
+1) "bing.com"
+2) "6"
+3) "baidu.com"
+4) "9"
+5) "google.com"
+6) "10"
+
+### zrem
+# 语法: ZREM key member [member ...]
+# 测试数据
+redis> ZRANGE page_rank 0 -1 WITHSCORES
+1) "bing.com"
+2) "8"
+3) "baidu.com"
+4) "9"
+5) "google.com"
+6) "10"
+# 移除单个元素
+redis> ZREM page_rank google.com
+(integer) 1
+redis> ZRANGE page_rank 0 -1 WITHSCORES
+1) "bing.com"
+2) "8"
+3) "baidu.com"
+4) "9"
+# 移除多个元素
+redis> ZREM page_rank baidu.com bing.com
+(integer) 2
+redis> ZRANGE page_rank 0 -1 WITHSCORES
+(empty list or set)
+# 移除不存在元素
+redis> ZREM page_rank non-exists-element
+(integer) 0
+
+### zincrby
+redis> ZSCORE salary tom
+"2000"
+redis> ZINCRBY salary 2000 tom   # tom 加薪啦！
+"4000"
+
+### zremrangebyrank
+# 语法： ZREMRANGEBYRANK key start stop
+redis> ZADD salary 2000 jack
+(integer) 1
+redis> ZADD salary 5000 tom
+(integer) 1
+redis> ZADD salary 3500 peter
+(integer) 1
+redis> ZREMRANGEBYRANK salary 0 1       # 移除下标 0 至 1 区间内的成员
+(integer) 2
+redis> ZRANGE salary 0 -1 WITHSCORES    # 有序集只剩下一个成员
+1) "tom"
+2) "5000"
+
+### zremrangebyscore
+redis> ZRANGE salary 0 -1 WITHSCORES          # 显示有序集内所有成员及其 score 值
+1) "tom"
+2) "2000"
+3) "peter"
+4) "3500"
+5) "jack"
+6) "5000"
+redis> ZREMRANGEBYSCORE salary 1500 3500      # 移除所有薪水在 1500 到 3500 内的员工
+(integer) 2
+redis> ZRANGE salary 0 -1 WITHSCORES          # 剩下的有序集成员
+1) "jack"
+2) "5000"
+
+
+```
+
+
+
+#### 集合查询
+
+##### zcard/zcount/zrange/zrangebyscore/zrevrange/zrevrangebyscore/zrank/zrevrank/zscore
+
+```bash
+### zcard
+redis > ZADD salary 2000 tom    # 添加一个成员
+(integer) 1
+redis > ZCARD salary
+(integer) 1
+redis > ZADD salary 5000 jack   # 再添加一个成员
+(integer) 1
+redis > ZCARD salary
+(integer) 2
+redis > EXISTS non_exists_key   # 对不存在的 key 进行 ZCARD 操作
+(integer) 0
+redis > ZCARD non_exists_key
+(integer) 0
+
+### zcount
+redis> ZRANGE salary 0 -1 WITHSCORES    # 测试数据
+1) "jack"
+2) "2000"
+3) "peter"
+4) "3500"
+5) "tom"
+6) "5000"
+redis> ZCOUNT salary 2000 5000          # 计算薪水在 2000-5000 之间的人数
+(integer) 3
+redis> ZCOUNT salary 3000 5000          # 计算薪水在 3000-5000 之间的人数
+(integer) 2
+
+### zrange
+# 语法： ZRANGE key start stop [WITHSCORES]
+redis > ZRANGE salary 0 -1 WITHSCORES             # 显示整个有序集成员
+1) "jack"
+2) "3500"
+3) "tom"
+4) "5000"
+5) "boss"
+6) "10086"
+redis > ZRANGE salary 1 2 WITHSCORES              # 显示有序集下标区间 1 至 2 的成员
+1) "tom"
+2) "5000"
+3) "boss"
+4) "10086"
+redis > ZRANGE salary 0 200000 WITHSCORES         # 测试 end 下标超出最大下标时的情况
+1) "jack"
+2) "3500"
+3) "tom"
+4) "5000"
+5) "boss"
+6) "10086"
+redis > ZRANGE salary 200000 3000000 WITHSCORES   # 测试当给定区间不存在于有序集时的情况
+(empty list or set)
+
+### zrangebyscore
+# 语法： ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
+# -inf 和 +inf 表示正负无穷
+# 认情况下，区间的取值使用闭区间，参数 ( 表示开区间 
+# 举例：
+# ZRANGEBYSCORE zset (1 5 返回所有符合条件 1 < score <= 5 的成员
+# ZRANGEBYSCORE zset (5 (10 则返回所有符合条件 5 < score < 10 的成员。
+redis> ZADD salary 2500 jack                        # 测试数据
+(integer) 0
+redis> ZADD salary 5000 tom
+(integer) 0
+redis> ZADD salary 12000 peter
+(integer) 0
+redis> ZRANGEBYSCORE salary -inf +inf               # 显示整个有序集
+1) "jack"
+2) "tom"
+3) "peter"
+redis> ZRANGEBYSCORE salary -inf +inf WITHSCORES    # 显示整个有序集及成员的 score 值
+1) "jack"
+2) "2500"
+3) "tom"
+4) "5000"
+5) "peter"
+6) "12000"
+redis> ZRANGEBYSCORE salary -inf 5000 WITHSCORES    # 显示工资 <=5000 的所有成员
+1) "jack"
+2) "2500"
+3) "tom"
+4) "5000"
+redis> ZRANGEBYSCORE salary (5000 400000            # 显示工资大于 5000 小于等于 400000 的成员
+1) "peter"
+
+### zrevrange
+redis> ZRANGE salary 0 -1 WITHSCORES        # 递增排列
+1) "peter"
+2) "3500"
+3) "tom"
+4) "4000"
+5) "jack"
+6) "5000"
+redis> ZREVRANGE salary 0 -1 WITHSCORES     # 递减排列
+1) "jack"
+2) "5000"
+3) "tom"
+4) "4000"
+5) "peter"
+6) "3500"
+
+### zrevrangebyscore
+redis > ZADD salary 10086 jack
+(integer) 1
+redis > ZADD salary 5000 tom
+(integer) 1
+redis > ZADD salary 7500 peter
+(integer) 1
+redis > ZADD salary 3500 joe
+(integer) 1
+
+redis > ZREVRANGEBYSCORE salary +inf -inf   # 逆序排列所有成员
+1) "jack"
+2) "peter"
+3) "tom"
+4) "joe"
+redis > ZREVRANGEBYSCORE salary 10000 2000  # 逆序排列薪水介于 10000 和 2000 之间的成员
+1) "peter"
+2) "tom"
+3) "joe"
+
+### zrank
+# 语法：ZRANK key member
+# 返回有序集 key 中成员 member 的排名（从0开始）
+# redis> ZRANGE salary 0 -1 WITHSCORES        # 显示所有成员及其 score 值
+1) "peter"
+2) "3500"
+3) "tom"
+4) "4000"
+5) "jack"
+6) "5000"
+redis> ZRANK salary tom                     # 显示 tom 的薪水排名，第二
+(integer) 1
+
+### zrevrank
+redis 127.0.0.1:6379> ZRANGE salary 0 -1 WITHSCORES     # 测试数据
+1) "jack"
+2) "2000"
+3) "peter"
+4) "3500"
+5) "tom"
+6) "5000"
+redis> ZREVRANK salary peter     # peter 的工资排第二
+(integer) 1
+redis> ZREVRANK salary tom       # tom 的工资最高
+(integer) 0
+
+### zscore
+redis> ZRANGE salary 0 -1 WITHSCORES    # 测试数据
+1) "tom"
+2) "2000"
+3) "peter"
+4) "3500"
+5) "jack"
+6) "5000"
+redis> ZSCORE salary peter              # 注意返回值是字符串
+"3500"
+```
+
+#### 集合操作
+
+##### zunionstore/zinterstore
+
+```bash
+### zuniostore
+redis> ZRANGE programmer 0 -1 WITHSCORES
+1) "peter"
+2) "2000"
+3) "jack"
+4) "3500"
+5) "tom"
+6) "5000"
+redis> ZRANGE manager 0 -1 WITHSCORES
+1) "herry"
+2) "2000"
+3) "mary"
+4) "3500"
+5) "bob"
+6) "4000"
+redis> ZUNIONSTORE salary 2 programmer manager WEIGHTS 1 3   # 公司决定加薪。。。除了程序员。。。
+(integer) 6
+redis> ZRANGE salary 0 -1 WITHSCORES
+1) "peter"
+2) "2000"
+3) "jack"
+4) "3500"
+5) "tom"
+6) "5000"
+7) "herry"
+8) "6000"
+9) "mary"
+10) "10500"
+11) "bob"
+12) "12000"
+
+### zinterstore
+redis > ZADD mid_test 70 "Li Lei"
+(integer) 1
+redis > ZADD mid_test 70 "Han Meimei"
+(integer) 1
+redis > ZADD mid_test 99.5 "Tom"
+(integer) 1
+redis > ZADD fin_test 88 "Li Lei"
+(integer) 1
+redis > ZADD fin_test 75 "Han Meimei"
+(integer) 1
+redis > ZADD fin_test 99.5 "Tom"
+(integer) 1
+redis > ZINTERSTORE sum_point 2 mid_test fin_test
+(integer) 3
+redis > ZRANGE sum_point 0 -1 WITHSCORES     # 显示有序集内所有成员及其 score 值
+1) "Han Meimei"
+2) "145"
+3) "Li Lei"
+4) "158"
+5) "Tom"
+6) "199"
+```
+
+
 
 ### Hash
 
@@ -1399,7 +1944,7 @@ redis> HGETALL abbr
 
 
 
- 
+
 
 
 
@@ -1483,7 +2028,7 @@ redis中的存储的热点数据有一定的有效期，未来某一时刻这些
 
 ## 应用案例
 
-### web 服务与 AI 算法系统架构 
+### web 服务与 AI 算法系统架构
 
 ## redis的学习资料
 
