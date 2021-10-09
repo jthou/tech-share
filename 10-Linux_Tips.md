@@ -1,4 +1,4 @@
-## Linux 服务管理两种方式service和systemctl
+## 01. Linux 服务管理两种方式service和systemctl
 
 Linux 服务管理两种方式service和systemctl
 
@@ -39,7 +39,7 @@ https://www.cnblogs.com/shijingjing07/p/9301590.html
 
 
 
-## ssh登录安全性设置
+## 02. ssh登录安全性设置
 
 防暴力破解，
 
@@ -81,7 +81,7 @@ https://www.cnblogs.com/shijingjing07/p/9301590.html
 
 （略）
 
-### 准备证书
+#### 准备证书
 
 - 生成证书，（可以在服务器上操作，也可以在别的机器上操作，也可以用已有的证书）
 
@@ -118,12 +118,46 @@ https://www.cnblogs.com/shijingjing07/p/9301590.html
 
 - 将id_rsa文件拷贝到终端机，**如果证书是在服务器上生成的，一定记得删除**
 
-### 设置WinSCP
+#### 设置WinSCP
 
 配置WinSCP的时候，选中id_rsa文件之后，会提示转成PutTY格式，确定后会生成一个同名的ppk文件，用改文件做为秘钥即可。
 
 ![image-20210924181253598](img/10-Linux_Tips/image-20210924181253598.png)
 
-### 设置Xshel
+#### 设置Xshel
 
 ![image-20210924181707995](img/10-Linux_Tips/image-20210924181707995.png)
+
+## 03. 桌面版Linux更改开机动画
+
+Plymouth是为Ubuntu系统提开机和关机画面的应该程序。plymouth整体分两个主要部分，服务端和客户端，典型的C/S模型。服务端和客户端直接通过socket通信。
+
+- 服务端。是一个后台守护进程plymouthd，用于处理请求，请求种类有很多，比如典型的update、quit等。服务端通过epoll监控相关socket(也有管道），监听来自客户端的信息。
+- 客户端。客户端可以多种多样，典型的客户端有：plymouth程序、systemd。客户端通过socket(也有管道）与服务端建立连接，并通过socket(也有管道）发送具体的请求。
+
+```bash
+jthou@ubuntu:~/Desktop$ sudo apt install plymouth-themes plymouth plymouth-x11
+jthou@ubuntu:~/Desktop$ sudo apt install git
+jthou@ubuntu:~/Desktop$ git clone https://github.com/adi1090x/plymouth-themes
+jthou@ubuntu:~/Desktop$ sudo cp -r plymouth-themes/pack_1/angular/ /usr/share/plymouth/themes 
+jthou@ubuntu:~/Desktop$ sudo update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth /usr/share/plymouth/themes/angular/angular.plymouth 100
+jthou@ubuntu:~/Desktop$ sudo update-alternatives --config default.plymouth 
+There are 15 choices for the alternative default.plymouth (providing /usr/share/plymouth/themes/default.plymouth).
+
+  Selection    Path                                                                               Priority   Status
+------------------------------------------------------------
+  0            /usr/share/plymouth/themes/edubuntu-logo/edubuntu-logo.plymouth                     150       auto mode
+  1            /usr/share/plymouth/themes/bgrt/bgrt.plymouth                                       110       manual mode
+  2            /usr/share/plymouth/themes/edubuntu-logo/edubuntu-logo.plymouth                     150       manual mode
+  3            /usr/share/plymouth/themes/kubuntu-logo/kubuntu-logo.plymouth                       150       manual mode
+  4            /usr/share/plymouth/themes/lubuntu-logo/lubuntu-logo.plymouth                       150       manual mode
+  5            /usr/share/plymouth/themes/angular/angular.plymouth                                 100       manual mode
+* 6            /usr/share/plymouth/themes/sabily/sabily.plymouth                                   60        manual mode
+  7            /usr/share/plymouth/themes/spinner/spinner.plymouth                                 70        manual mode
+.....
+
+jthou@ubuntu:~/Desktop$ sudo update-initramfs -u
+update-initramfs: Generating /boot/initrd.img-5.11.0-27-generic
+jthou@ubuntu:~/Desktop$ reboot
+```
+

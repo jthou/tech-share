@@ -1,117 +1,87 @@
-## 前言
+## 开发环境配置
 
-### Nodejs
+### NodeJS 版本管理
 
-Node.js 是一个开源与跨平台的 JavaScript 运行时环境。 它是一个可用于几乎任何项目的流行工具！
+#### Windows
 
-在浏览器外运行 V8 JavaScript 引擎（Google Chrome 的内核）。
+1. 安装nvm
 
-Node.js 应用程序运行于单个进程中，无需为每个请求创建新的线程。同时Node.js 在其标准库中提供了一组异步的 I/O 原生功能，用以防止 JavaScript 代码被阻塞。当 Node.js 执行 I/O 操作时（例如从网络读取、访问数据库或文件系统），Node.js 会在响应返回时恢复操作，而不是阻塞线程并浪费 CPU 循环等待。
+   > 下载地址：https://wordpress.com/support/markdown-quick-reference/
 
-这使 Node.js 可以在一台服务器上处理数千个并发连接，而无需引入管理线程并发的负担（这可能是重大 bug 的来源）。
+2. 安装nodejs:
 
+   ```cmd
+   nvm install 14.18.0
+   nvm install last
+   nvm install 10.16.
+   ```
 
+   > - 设置淘宝镜像：
+   >
+   >   ```
+   >   nvm node_mirror https://npm.taobao.org/mirrors/node/
+   >   nvm npm_mirror https://npm.taobao.org/mirrors/npm/ 
+   >   ```
+   >
+   
+3. 查看
 
-## yarn
+   ```
+   > nvm list
+   ```
 
-yarn是一个代码包管理器，用它可以使用其他开发者分享的代码，也可以讲代码分享给他人。代码包的描述包含在`package.json`文件中。
+   ```
+       14.18.0
+     * 10.16.0 (Currently using 64-bit executable)
+   ```
 
-### 安装
+4. 选择
 
-推荐通过npm安装。
+   ```
+   nvm use 14.18.0
+   ```
 
-```bash
-npm install --global yarn
-yarn --version
-```
+   
 
+#### Linux
 
+1. 安装npm
 
-### 配置
+   ```bash
+   sudo apt install npm
+   ```
 
-#### 设置 key value
+2. 安装 n
 
-语法：
+   ```bash
+   sudo npm install -g n
+   ```
 
-```bash
-yarn config set <key> <value> [-g|--global]
-```
+3. 安装nodejs
 
-举例：
+   ```bash
+   sudo n install 14.18.0
+   sudo n install latest
+   ```
 
-```bash
-$ yarn config set init-license BSD-2-Clause
-yarn config vx.x.x
-success Set "init-license" to "BSD-2-Clause".
-✨  Done in 0.05s.
-```
+4. 查看
 
-#### 查看 key
+   ```bash
+   n ls
+   ```
 
-语法：
+   ```
+   node/14.18.0
+   node/16.11.0
+   ```
 
-```bash
-yarn config get <key>
-```
+5. 选择
 
-举例：
+   ```
+   sudo n
+   ```
 
-```bash
-$ yarn config get init-license
-BSD-2-Clause
-```
-
-#### 删除 key
-
-语法：
-
-```bash
-yarn config delete <key>
-```
-
-举例：
-
-```bash
-$ yarn config delete test-key
-yarn config vx.x.x
-success Deleted "test-key".
-✨  Done in 0.06s.
-```
-
-#### 显示当前配置
-
-语法：
-
-```bash
-yarn config list
-```
-
-举例：
-
-```bash
-$ yarn config list
-yarn config vx.x.x
-info yarn config
-{ 'version-tag-prefix': 'v',
-  'version-git-tag': true,
-  'version-git-sign': false,
-  'version-git-message': 'v%s',
-  'init-version': '1.0.0',
-  'init-license': 'MIT',
-  'save-prefix': '^',
-  'ignore-scripts': false,
-  'ignore-optional': true,
-  registry: 'https://registry.yarnpkg.com',
-  'user-agent': 'yarn/0.15.0 npm/? node/v6.2.1 darwin x64' }
-info npm config
-{ registry: 'https://registry.npmjs.org/',
-  '//localhost:4873/:_authToken': 'some-auth-token' }
-✨  Done in 0.05s.
-```
-
-
-
-
+   
 
 ## 参考文献
 
