@@ -81,6 +81,14 @@
    sudo n
    ```
 
+   ```
+       node/14.18.0
+     ο node/16.11.0
+   
+   Use up/down arrow keys to select a version, return key to install, d to delete, q to quit
+   
+   ```
+   
    
 
 ## 参考文献
