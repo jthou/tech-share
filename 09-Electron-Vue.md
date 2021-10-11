@@ -14,7 +14,7 @@
 
 1. 安装nvm
 
-   > 下载地址：https://wordpress.com/support/markdown-quick-reference/
+   > 下载地址：https://github.com/coreybutler/nvm-windows/releases
 
 2. 安装`nodejs`:
 
