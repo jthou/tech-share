@@ -1,6 +1,59 @@
 ## 基本语法
 
-### SET命令
+
+
+### 变量
+
+#### SET命令
+
+语法：
+
+```bat
+set /A variable-name=value
+```
+
+其中 
+
+- *variable-name* - 变量的名称。
+- *value* - 变量的值。
+- */A* - 数值开关。
+
+示例：
+
+```bat
+@echo off 
+set message=Hello World 
+echo %message%
+```
+
+运行：
+
+```
+>run.bat
+Hello World
+```
+
+
+
+#### 命令行参数
+
+可以通过变量`％1`，`％2`，`％3`给批处理文件传递命令参数。
+
+```bat
+@echo off 
+echo %1 
+echo %2 
+echo %3
+```
+
+运行：
+
+```
+>run.bat 1 2 3
+1 2 3 
+```
+
+
 
 
 
@@ -111,6 +164,8 @@ echo %var%
 
 
 
+### 
+
 ### for循环
 
 #### for循环的基本形态
@@ -120,6 +175,7 @@ Windows bat脚本的for语句基本形态如下：
 - 在CMD窗口中：
 
   ```bat
+
 	for %I in (command1) do command2
   ```
 
