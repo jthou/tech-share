@@ -23,26 +23,16 @@
    nvm install last
    nvm install 10.16.
    ```
-
    > - 设置淘宝镜像：
    >
    >   ```
    >   nvm node_mirror https://npm.taobao.org/mirrors/node/
    >   nvm npm_mirror https://npm.taobao.org/mirrors/npm/ 
    >   ```
-   >
-   > - 如果在内网，还可能需要设置proxy，nvm 依赖于curl下载，可设置proxy到`.curlrc`文件中
-   >
-   >   ```
-   >   > cat .curlrc
-   >   proxy = http://name:pass@host:port
-   >   ```
 
 3. 查看已经安装的版本
 
-   ```
    > nvm list
-   ```
    ```
        14.18.0
      * 10.16.0 (Currently using 64-bit executable)
@@ -50,8 +40,8 @@
 
 4. 选择node版本
 
-   ```
    nvm use 14.18.0
+   
    ```
 > **已知问题**
 > 
@@ -67,17 +57,15 @@
 #### n (Linux )
 
 1. 安装`npm`
+
    ```bash
    sudo apt install npm
-   ```
 
 2. 安装 n
 
    ```bash
    sudo npm install -g n
    ```
-
-
 3. 安装`nodejs`
 
    ```bash
@@ -90,6 +78,7 @@
    ```
    n ls
    ```
+
    ```
    node/14.18.0
    node/16.11.0
@@ -100,6 +89,7 @@
    ```
    sudo n
    ```
+
    ```
        node/14.18.0
      ο node/16.11.0
@@ -107,7 +97,6 @@
    Use up/down arrow keys to select a version, return key to install, d to delete, q to quit
    
    ```
-
 
 #### `npx`
 
@@ -176,8 +165,10 @@ npm install -g npx
   
   某些场景下，这个方法用来切换 Node 版本，要比 nvm 那样的版本管理器方便一些。[^1]
 
-## 项目配置
-### package.json
+### 项目配置
+
+#### package.json
+
 package.json 文件是项目的清单。 它可以做很多完全互不相关的事情。 例如，它是用于工具的配置中心。 它也是 `npm` 和 `yarn` 存储所有已安装软件包的名称和版本的地方。
 
 对于应用程序，package.json 文件中的内容没有固定的要求。 唯一的要求是必须遵守 JSON 格式，否则，尝试以编程的方式访问其属性的程序则无法读取它。
@@ -186,7 +177,7 @@ package.json 中常用的属性分为两种：
 - 用于 npmjs.com 的属性
 - 用于与代码交互的脚本（npm或其它工具）
 
-#### 用于 npmjs.com 的属性
+##### 用于 npmjs.com 的属性
 
 比如：
 
@@ -202,15 +193,16 @@ package.json 中常用的属性分为两种：
 - main 设置了应用程序的入口点。
 - private 如果设置为 true，则可以防止应用程序/软件包被意外地发布到
 
+##### 用于与代码交互的脚本
 
-#### 用于与代码交互的脚本
 - scripts 定义了一组可以运行的 node 脚本。
 - dependencies 设置了作为依赖安装的 npm 软件包的列表。
 - devDependencies 设置了作为开发依赖安装的 npm 软件包的列表。
 - engines 设置了此软件包/应用程序在哪个版本的 Node.js 上运行。
 - browserslist 用于告知要支持哪些浏览器（及其版本）。
 
-##### scripts
+###### scripts
+
 可以定义一组可以运行的 node 脚本。
 
 示例：
@@ -227,7 +219,8 @@ package.json 中常用的属性分为两种：
 ```
 这些脚本是命令行应用程序。 可以通过调用 npm run XXXX 或 yarn XXXX 来运行它们，其中 XXXX 是命令的名称。 例如：npm run dev。
 
-##### dependencies
+###### dependencies
+
 设置作为依赖安装的 npm 软件包的列表。
 
 当使用 npm 或 yarn 安装软件包时：
@@ -237,7 +230,7 @@ npm install <PACKAGENAME>
 yarn add <PACKAGENAME>
 ```
 
-##### devDependencies
+###### devDependencies
 
 开发依赖安装的 npm 软件包的列表。
 
@@ -258,7 +251,8 @@ yarn add --dev <PACKAGENAME>
 
 ```
 
-##### engines
+###### engines
+
 设置此软件包/应用程序要运行的 Node.js 或其他命令的版本。
 
 示例：
@@ -271,39 +265,13 @@ yarn add --dev <PACKAGENAME>
 }
 ```
 
-##### browserslist
-
-用于告知要支持哪些浏览器（及其版本）。 Babel、Autoprefixer 和其他工具会用到它，以将所需的 polyfill 和 fallback 添加到目标浏览器。
-
-示例：
-
-```json
-"browserslist": [
-  "> 1%",
-  "last 2 versions",
-  "not ie <= 8"
-]
-```
-
-此配置意味着需要支持使用率超过 1％（来自 CanIUse.com 的统计信息）的所有浏览器的最新的 2 个主版本，但不含 IE8 及更低的版本。
-
-##### npm软件语义控制
+###### npm软件语义控制
 
 `npm` 设置了一些规则，可用于在 `package.json` 文件中选择要将软件包更新到的版本（当运行 `npm update` 时）。
 
 规则使用了这些符号：
 
-- `^`
-- `~`
-- `>`
-- `>=`
-- `<`
-- `<=`
-- `=`
-- `-`
-- `||`
-
-
+ `^` 、`~` 、`>` 、`>=` 、`<` 、`<=` 、`=` 、`-` 、`||`
 
 这些规则的详情如下：
 
@@ -338,7 +306,7 @@ yarn add --dev <PACKAGENAME>
 - 1.0.0 || >=1.1.0 <1.2.0
   使用 1.0.0 或从 1.1.0 开始但低于 1.2.0 的版本。
 
-### npm install
+#### npm install
 
 语法：
 
@@ -383,7 +351,8 @@ npm install -g webpack@4.16.4
   '1.3.1' ]
 ```
 
-### package-lock.json
+#### package-lock.json
+
 在版本 5 中，npm 引入了 package-lock.json 文件。该文件旨在跟踪被安装的每个软件包的确切版本，以便产品可以以相同的方式被 100％ 复制（即使软件包的维护者更新了软件包）。
 
 package-lock.json 会固化当前安装的每个软件包的版本，当运行 npm install时，npm 会使用这些确切的版本。
