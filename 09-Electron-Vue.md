@@ -286,13 +286,10 @@ yarn add --dev <PACKAGENAME>
 - `||`: 组合集合。例如 `< 2.1 || > 2.6`。
 
 
-
 还有其他的规则：
 
 - 无符号: 仅接受指定的特定版本（例如 `1.2.1`）。
 - `latest`: 使用可用的最新版本。
-
-
 
 示例：
 
@@ -365,8 +362,11 @@ package-lock.json 会固化当前安装的每个软件包的版本，当运行 n
 - 开发依赖库安装到 devDependencies (-D 或者 --save-dev)
 - 提交并管理 package-lock.json文件，保证各个环境下小版本一致。
 
-## 参考文献
+### 参考文献
 
 [^1]: [阮一峰 npx 使用教程](https://www.ruanyifeng.com/blog/2019/02/npx.html)
+
 [^2]: [NodeJS 入门教程](http://nodejs.cn/learn)
+
+## VUE-CLI
 
