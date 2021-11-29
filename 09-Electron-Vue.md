@@ -165,6 +165,38 @@ npm install -g npx
   
   某些场景下，这个方法用来切换 Node 版本，要比 nvm 那样的版本管理器方便一些。[^1]
 
+### 安装Visual Studio生成工具
+
+下载地址：
+
+https://visualstudio.microsoft.com/zh-hans/
+
+安装：
+
+![image-20211126111332277](img/09-Electron-Vue/image-20211126111332277.png)
+
+
+
+配置npm
+
+```bat
+npm config set msvs_version 2017
+```
+
+### 安装Python
+
+下载地址
+
+https://www.python.org/downloads/windows/
+
+配置npm
+
+```
+npm config set python "C:\Python27\python.exe"
+```
+
+
+
 ### 项目配置
 
 #### package.json
@@ -356,11 +388,12 @@ package-lock.json 会固化当前安装的每个软件包的版本，当运行 n
 
 ### 开发环境方案建议
 
-- 使用node版本管理工具，Windows下使用nvm，Linux使用n
-- 用nvm或者n，全局安装所需要的NodeJs版本，并根据项目需要做版本切换
+- 使用node版本管理工具，Windows下使用`nvm`，Linux使用`n`
+- 用`nvm`或者`n`，全局安装所需要的NodeJs版本，并根据项目需要做版本切换
 - 项目依赖库安装到 dependencies 
 - 开发依赖库安装到 devDependencies (-D 或者 --save-dev)
 - 提交并管理 package-lock.json文件，保证各个环境下小版本一致。
+- 遇到问题时，启动`-v` `--verbose` 选项，查看细节。
 
 ### 参考文献
 
