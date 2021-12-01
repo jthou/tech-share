@@ -58,6 +58,35 @@ MySQL的二进制日志可以说是MySQL最重要的日志了，它记录了所�
 
 
 
+## MySQL性能优化
+
+### MySQL性能测试
+
+性能指标：
+
+- TPS ：Transactions Per Second ，即数据库每秒执行的事务数，以 commit 成功次数为准。
+- QPS ：Queries Per Second ，即数据库每秒执行的 SQL 数（含 insert、select、update、delete 等）。
+- RT ：Response Time ，响应时间。包括平均响应时间、最小响应时间、最大响应时间、每个响应时间的查询占比。比较需要重点关注的是，前 95-99% 的最大响应时间。因为它决定了大多数情况下的短板。
+- Concurrency Threads ：并发量，每秒可处理的查询请求的数量。
+
+总结来说，实际就是 2 个维度：
+
+- 吞吐量
+- 延迟
+
+MySQL 的性能测试工具还是比较多的，使用最多的是 sysbench 和 mysqlslap 。
+
+### 本章参考文献
+
+1. https://www.cnblogs.com/caicairui/p/7350698.html
+2. https://www.cnblogs.com/wangzhuxing/p/5223881.html
+3. https://blog.csdn.net/weixin_39715997/article/details/113209768
+4. https://cloud.tencent.com/developer/article/1596673
+5. https://cloud.tencent.com/developer/article/1536046
+6. [详解MySQL基准测试和sysbench工具 - 编程迷思 - 博客园 (cnblogs.com)](https://www.cnblogs.com/kismetv/p/7615738.html)
+7. [【性能测试】MySQL数据库性能测试_三桨鱼的博客-CSDN博客](https://blog.csdn.net/qingdaoyin/article/details/120306452)
+8. [测试 MySQL 性能的几款工具 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/67553416)
+
 ## 参考
 
 [1] [https://www.cnblogs.com/martinzhang/p/3454358.html](https://www.cnblogs.com/martinzhang/p/3454358.html)

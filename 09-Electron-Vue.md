@@ -1,4 +1,4 @@
-## 开发环境与项目配置
+## 开发环境
 
 项目环境配置要考虑到的情况：
 
@@ -197,9 +197,9 @@ npm config set python "C:\Python27\python.exe"
 
 
 
-### 项目配置
+## 项目配置
 
-#### package.json
+### package.json
 
 package.json 文件是项目的清单。 它可以做很多完全互不相关的事情。 例如，它是用于工具的配置中心。 它也是 `npm` 和 `yarn` 存储所有已安装软件包的名称和版本的地方。
 
@@ -209,7 +209,7 @@ package.json 中常用的属性分为两种：
 - 用于 npmjs.com 的属性
 - 用于与代码交互的脚本（npm或其它工具）
 
-##### 用于 npmjs.com 的属性
+#### 用于 npmjs.com 的属性
 
 比如：
 
@@ -225,7 +225,7 @@ package.json 中常用的属性分为两种：
 - main 设置了应用程序的入口点。
 - private 如果设置为 true，则可以防止应用程序/软件包被意外地发布到
 
-##### 用于与代码交互的脚本
+#### 用于与代码交互的脚本
 
 - scripts 定义了一组可以运行的 node 脚本。
 - dependencies 设置了作为依赖安装的 npm 软件包的列表。
@@ -233,7 +233,7 @@ package.json 中常用的属性分为两种：
 - engines 设置了此软件包/应用程序在哪个版本的 Node.js 上运行。
 - browserslist 用于告知要支持哪些浏览器（及其版本）。
 
-###### scripts
+##### scripts
 
 可以定义一组可以运行的 node 脚本。
 
@@ -251,7 +251,7 @@ package.json 中常用的属性分为两种：
 ```
 这些脚本是命令行应用程序。 可以通过调用 npm run XXXX 或 yarn XXXX 来运行它们，其中 XXXX 是命令的名称。 例如：npm run dev。
 
-###### dependencies
+##### dependencies
 
 设置作为依赖安装的 npm 软件包的列表。
 
@@ -262,7 +262,7 @@ npm install <PACKAGENAME>
 yarn add <PACKAGENAME>
 ```
 
-###### devDependencies
+##### devDependencies
 
 开发依赖安装的 npm 软件包的列表。
 
@@ -283,7 +283,7 @@ yarn add --dev <PACKAGENAME>
 
 ```
 
-###### engines
+##### engines
 
 设置此软件包/应用程序要运行的 Node.js 或其他命令的版本。
 
@@ -297,7 +297,7 @@ yarn add --dev <PACKAGENAME>
 }
 ```
 
-###### npm软件语义控制
+##### npm软件语义控制
 
 `npm` 设置了一些规则，可用于在 `package.json` 文件中选择要将软件包更新到的版本（当运行 `npm update` 时）。
 
@@ -338,7 +338,7 @@ yarn add --dev <PACKAGENAME>
 - 1.0.0 || >=1.1.0 <1.2.0
   使用 1.0.0 或从 1.1.0 开始但低于 1.2.0 的版本。
 
-#### npm install
+### npm install
 
 语法：
 
@@ -383,13 +383,13 @@ npm install -g webpack@4.16.4
   '1.3.1' ]
 ```
 
-#### package-lock.json
+### package-lock.json
 
 在版本 5 中，npm 引入了 package-lock.json 文件。该文件旨在跟踪被安装的每个软件包的确切版本，以便产品可以以相同的方式被 100％ 复制（即使软件包的维护者更新了软件包）。
 
 package-lock.json 会固化当前安装的每个软件包的版本，当运行 npm install时，npm 会使用这些确切的版本。
 
-### 开发环境方案建议
+## 开发环境方案建议
 
 - 使用node版本管理工具，Windows下使用`nvm`，Linux使用`n`
 - 用`nvm`或者`n`，全局安装所需要的NodeJs版本，并根据项目需要做版本切换
@@ -403,3 +403,14 @@ package-lock.json 会固化当前安装的每个软件包的版本，当运行 n
 [^1]: [阮一峰 npx 使用教程](https://www.ruanyifeng.com/blog/2019/02/npx.html)
 [^2]: [NodeJS 入门教程](http://nodejs.cn/learn)
 
+
+
+## VUE
+
+### VUE模块生命周期
+
+![img](img/09-Electron-Vue/v2-b5b92557856827f4e360dab3fcc2b521_720w.jpg)
+
+### 参考文献
+
+- [Vue生命周期-小白看了都懂的 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/196771621)
