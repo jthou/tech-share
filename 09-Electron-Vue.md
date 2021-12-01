@@ -318,13 +318,10 @@ yarn add --dev <PACKAGENAME>
 - `||`: 组合集合。例如 `< 2.1 || > 2.6`。
 
 
-
 还有其他的规则：
 
 - 无符号: 仅接受指定的特定版本（例如 `1.2.1`）。
 - `latest`: 使用可用的最新版本。
-
-
 
 示例：
 
@@ -398,11 +395,13 @@ package-lock.json 会固化当前安装的每个软件包的版本，当运行 n
 - 提交并管理 package-lock.json文件，保证各个环境下小版本一致。
 - 遇到问题时，启动`-v` `--verbose` 选项，查看细节。
 
-## 参考文献
+### 参考文献
 
 [^1]: [阮一峰 npx 使用教程](https://www.ruanyifeng.com/blog/2019/02/npx.html)
+
 [^2]: [NodeJS 入门教程](http://nodejs.cn/learn)
 
+<<<<<<< HEAD
 
 
 ## VUE
@@ -414,3 +413,7 @@ package-lock.json 会固化当前安装的每个软件包的版本，当运行 n
 ### 参考文献
 
 - [Vue生命周期-小白看了都懂的 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/196771621)
+=======
+## VUE-CLI
+
+>>>>>>> ce2691ef56ef336e672aebf931c26da6736ac814
