@@ -44,3 +44,24 @@ jthou@ubuntu:~$ sudo  apt install open-vm-tools-desktop
 
 ```
 
+### 安装VMware Tools
+
+默认是灰的
+
+![4f36640eef04.png](images/2022-07-12/4f36640eef04.png)
+
+解决方法：
+- 关闭虚拟机
+- 将三个盘的物理驱动器改成自动检测
+
+![fd357ec177e6.png](images/2022-07-12/fd357ec177e6.png)
+
+重启虚拟机，点击安装
+
+![093421775fe9.png](images/2022-07-12/093421775fe9.png)
+
+发现会有一个文件
+
+![8ec05ca2ddcd.png](images/2022-07-12/8ec05ca2ddcd.png)
+
+将改文件解压到home目录下，然后运行 vmware-install.pl
